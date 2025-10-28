@@ -1,22 +1,29 @@
 import boto3
 import logging
-import json
 import time
-import argparse
+import os
+from datetime import datetime
 from config import parse_args
 from get_widget import  S3RequestRetriever
 from widget_processor import Wiget_Processor
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# --- Logging Setup ---
+log_dir = "logs"
+os.makedirs(log_dir, exist_ok=True)
+log_file_path = os.path.join(log_dir, "consumer.log")
 
-S3_CLIENT = boto3.client('s3', region_name='us-east-1')
-DYNAMODB_CLIENT = boto3.resource('dynamodb', region_name='us-east-1')
+# Configure the root logger
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(log_file_path)
+    ]
+)
 
-# --- Configuration ---
-S3_BUCKET_NAME = 'jaden-hw6-widgets' # Bucket 3
+logger = logging.getLogger(__name__)
 
-s3_bucket_requests = "jaden-hw6-requests"
-s3_bucket_widgets = "jaden-hw6-widgets"
 
 def init_consumer():
     config = parse_args()
@@ -39,7 +46,8 @@ def main():
         # grab request
         request = wiget_retriver.get_and_delete_next_request()
         if request is None:
-                continue
+            logger.info("No new requests found. Waiting...")
+            continue
 
         #process request
         widget_processor.process(request)

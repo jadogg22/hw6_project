@@ -1,7 +1,10 @@
 import boto3
 import json
+import logging
 from typing import Protocol, runtime_checkable, Dict, Any
 from config import ConsumerConfig
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -35,7 +38,7 @@ class S3Storage:
             assert request_id is not None, "requestId is required in request_data"
 
         except AssertionError as e:
-            print(f"S3 Strategy Error: {e}")
+            logger.error(f"S3 Strategy Error: {e}")
             return None
 
         
@@ -55,7 +58,7 @@ class S3Storage:
                 Body=json.dumps(widget_data),
                 ContentType="application/json"
         )
-        print(f"S3 Strategy: Storing widget {widget_data.get('widget_id')} in {self.bucket_name}")
+        logger.info(f"S3 Strategy: Storing widget {widget_id} in {self.bucket_name}")
 
 
 
@@ -82,7 +85,7 @@ class DynamoDBStorage:
             assert request_id is not None, "requestId is required in request_data"
 
         except AssertionError as e:
-            print(f"DynamoDB Strategy Error: {e}")
+            logger.error(f"DynamoDB Strategy Error: {e}")
             return None
 
         widget_data = {
@@ -93,23 +96,13 @@ class DynamoDBStorage:
                 "otherAttributes": request_data.get("otherAttributes", [])
                 }
     
-
         try:
             
             self.table.put_item(Item=widget_data)
-            print(f"DynamoDB Strategy Success: Stored widget {widget_id} in table")
+            logger.info(f"DynamoDB Strategy Success: Stored widget {widget_id} in table")
         except Exception as e:
-            print(f"DynamoDB Put Error: Failed to store widget {widget_id}. Error: {e}")
+            logger.error(f"DynamoDB Put Error: Failed to store widget {widget_id}. Error: {e}")
             raise
-
-
-
-
-
-
-
-
-
 
 
 
@@ -134,20 +127,22 @@ class Wiget_Processor:
 
         request_type = widget_data.get('type')
         if request_type is None:
-            print("Error: 'type' field missing in payload. Skipping.")
+            logger.error("Error: 'type' field missing in payload. Skipping.")
             return
         request_type = request_type.lower()
 
 
         if request_type == 'create':
-            print("Processing: Widget Create Request...")
+            logger.info("Processing: Widget Create Request...")
             self._storage_strategy.store_widget(widget_data)
         
         elif request_type == 'UPDATE':
-            print("Warning: Received UPDATE request. Skipping (Implementation pending for HW7).")
+            widget_id = widget_data.get("widgetId", "N/A")
+            logger.warning(f"Warning: Received UPDATE request for widget {widget_id}. Skipping (Implementation pending for HW7).")
             
         elif request_type == 'DELETE':
-            print("Warning: Received DELETE request. Skipping (Implementation pending for HW7).")
+            widget_id = widget_data.get("widgetId", "N/A")
+            logger.warning(f"Warning: Received DELETE request for widget {widget_id}. Skipping (Implementation pending for HW7).")
             
         else:
-            print(f"Error: Unknown request type in payload: {request_type}. Skipping.")
+            logger.error(f"Error: Unknown request type in payload: {request_type}. Skipping.")
