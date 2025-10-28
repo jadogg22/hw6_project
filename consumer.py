@@ -5,6 +5,7 @@ import time
 import argparse
 from config import parse_args
 from get_widget import  S3RequestRetriever
+from widget_processor import Wiget_Processor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -17,31 +18,34 @@ S3_BUCKET_NAME = 'jaden-hw6-widgets' # Bucket 3
 s3_bucket_requests = "jaden-hw6-requests"
 s3_bucket_widgets = "jaden-hw6-widgets"
 
+def init_consumer():
+    config = parse_args()
+    wiget_retriver = S3RequestRetriever(bucket_name=config.bucket_2_name, region_name=config.region_name)
+    widget_processor = Wiget_Processor(config)
+
+    return wiget_retriver, widget_processor
+
 
 
 
 def main():
-    print("Consumer started")
-    config = parse_args()
+    wiget_retriver, widget_processor = init_consumer()
 
-    wiget_retriver = S3RequestRetriever(bucket_name=config.bucket_2_name, region_name=config.region_name)
-    loopCondition = True
-
-
-    while(loopCondition):
+    #main loop
+    while(loopContinue := True):
         # slow down the loop
-        time.sleep(5)
+        time.sleep(1)
 
         # grab request
         request = wiget_retriver.get_and_delete_next_request()
         if request is None:
                 continue
 
+        #process request
+        widget_processor.process(request)
 
-        print(f'Processing request: {request["requestId"]}')
-
-        
-
+if __name__ == "__main__":
+    main()
 
 
 

@@ -30,6 +30,7 @@ class S3RequestRetriever:
 
             # Check if any objects were found
             if 'Contents' not in response:
+                print("No requests found in the bucket.")
                 return None  
 
             # Get the key of the first object
@@ -51,11 +52,13 @@ class S3RequestRetriever:
                 print(f"Warning: Malformed JSON found in request key: {request_key} returning nothing")
                 return None
 
+            
+
              #4. Delete the Request Object
             self.s3_client.delete_object(
                 Bucket=self.bucket_name,
                 Key=request_key
-            )
+             )
 
             print(f"Successfully retrieved and deleted request: {request_key}")
             return widget_request

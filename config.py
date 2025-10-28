@@ -36,8 +36,8 @@ def parse_args() -> ConsumerConfig:
     parser.add_argument(
         '--bucket-2-name',
         type=str,
-        required=True,
-        default='jaden-hw6-widgets',
+        required=False,
+        default='jaden-hw6-requests',
         help="Name of the S3 bucket containing Widget Requests (Bucket 2)."
     )
 
@@ -45,7 +45,7 @@ def parse_args() -> ConsumerConfig:
         '--bucket-3-name',
         type=str,
         required=False,
-        default='jaden-hw6-requests',
+        default='jaden-hw6-widgets',
         help="Name of the S3 bucket for storing created Widgets (Bucket 3). Required if --storage-type is 's3'."
     )
 
@@ -83,7 +83,7 @@ def parse_args() -> ConsumerConfig:
         parser.error("--dynamodb-table-name is required when --storage-type is 'dynamodb'.")
 
     return ConsumerConfig(
-        storage_type=args.storage_type,
+        storage_type=args.storage_type.lower(),
         bucket_2_name=args.bucket_2_name,
         bucket_3_name=args.bucket_3_name,
         dynamodb_table_name=args.dynamodb_table_name,
