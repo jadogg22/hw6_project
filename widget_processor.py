@@ -61,12 +61,56 @@ class S3Storage:
 
 class DynamoDBStorage:
     def __init__(self, config: ConsumerConfig):
-        self.client = boto3.resource('dynamodb', region_name=config.region_name)
-        self.table_name = config.dynamodb_table_name
+        dyno = boto3.resource('dynamodb', region_name=config.region_name)
+        self.table = dyno.Table(config.dynamodb_table_name)
 
-    def store_widget(self, widget_data: dict):
-        # implementing this later
-        print(f"DynamoDB Strategy: Storing widget {widget_data.get('widget_id')} in {self.table_name}")
+    def store_widget(self, request_data: dict):
+        """
+        Stores widget data in a DynamoDB table, flattening otherAttributes.
+    
+        """
+    
+        # 1. Basic Validation (Same logic as your S3 example)
+        widget_id = request_data.get("widgetId")
+        owner = request_data.get("owner")
+        request_id = request_data.get("requestId")
+        type_check = request_data.get("type")
+
+        try:
+            assert widget_id is not None, "widgetId is required in request_data"
+            assert owner is not None, "owner is required in request_data"
+            assert request_id is not None, "requestId is required in request_data"
+
+        except AssertionError as e:
+            print(f"DynamoDB Strategy Error: {e}")
+            return None
+
+        widget_data = {
+                "widgetId": widget_id,
+                "owner": request_data["owner"],
+                "label": request_data["label"],
+                "description": request_data["description"],
+                "otherAttributes": request_data.get("otherAttributes", [])
+                }
+    
+
+        try:
+            
+            self.table.put_item(Item=widget_data)
+            print(f"DynamoDB Strategy Success: Stored widget {widget_id} in table")
+        except Exception as e:
+            print(f"DynamoDB Put Error: Failed to store widget {widget_id}. Error: {e}")
+            raise
+
+
+
+
+
+
+
+
+
+
 
 
 
